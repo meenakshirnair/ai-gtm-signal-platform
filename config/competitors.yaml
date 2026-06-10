@@ -1,0 +1,26 @@
+competitors:
+  - name: Cursor
+    sources:
+      - type: changelog
+        url: https://changelog.cursor.com
+      - type: reddit
+        subreddit: r/cursor
+  - name: Windsurf
+    sources:
+      - type: blog
+        url: https://codeium.com/blog
+      - type: reddit
+        subreddit: r/Codeium
+  - name: GitHub Copilot
+    sources:
+      - type: blog_tag
+        url: https://github.blog
+        tag: copilot
+      - type: hackernews
+        query: copilot
+  - name: Codeium
+    sources:
+      - type: changelog
+        url: https://codeium.com/changelog
+      - type: reddit
+        subreddit: r/Codeium

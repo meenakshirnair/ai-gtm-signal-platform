@@ -1,81 +1,155 @@
 # AI-Powered GTM Signal Intelligence Platform
 
-## Project Overview
+A lean, free-tier platform that monitors AI coding tool competitors, extracts structured insights using an LLM, scores them by impact, and delivers a daily digest via Telegram + a public web dashboard.
 
-This project develops an AI-powered Go-To-Market (GTM) Signal Intelligence Platform designed for early-stage B2B SaaS startups. The platform automates the monitoring of market shifts, competitor activities, and emerging customer needs, providing real-time, actionable insights to GTM leaders, product managers, and founders.
+## 🎯 Problem Statement
 
-### Problem Solved
+Staying ahead in the fast-evolving AI coding tool market requires constant monitoring of competitor moves and market sentiment. Manual tracking is inefficient and often misses critical signals.
 
-Early-stage B2B SaaS companies often lack the dedicated resources to continuously monitor the market for critical signals such as competitor product launches, feature updates, and shifts in industry trends. This leads to reactive strategies, missed opportunities, and a slower response to competitive threats. Manual competitive analysis is time-consuming, often incomplete, and prone to human bias.
+## ✨ Solution
 
-### Solution
+This platform automates the intelligence gathering process:
 
-The AI-Powered GTM Signal Intelligence Platform addresses these challenges by:
+1.  **Automated Data Collection**: Continuously scrapes competitor changelogs, blogs, Reddit, and Hacker News.
+2.  **AI-Powered Analysis**: Uses Google Gemini 2.0 Flash to extract features, sentiment, and strategic implications.
+3.  **Impact Scoring**: Ranks signals by business impact (High, Medium, Low).
+4.  **Daily Digest & Dashboard**: Delivers insights via Telegram and a public web dashboard.
 
-1.  **Automated Data Collection:** Continuously scraping public web sources (e.g., competitor changelogs, blogs, news, forums) for relevant information.
-2.  **AI-Powered Insight Extraction:** Utilizing Large Language Models (LLMs) to process unstructured text data, summarize key updates, identify new features, detect sentiment, and extract strategic implications.
-3.  **Proactive Alerting:** Delivering timely, categorized digests of critical signals via an integrated alerting system (e.g., Telegram bot).
+## 🚀 Key Features
 
-This platform transforms raw, disparate data into structured, actionable intelligence, enabling startups to make more informed and proactive GTM and product decisions.
+### Data Collection
+-   Monitors 4 AI coding tool competitors: Cursor, Windsurf, Codeium, GitHub Copilot.
+-   Collects signals from changelogs, blogs, Reddit (using PRAW), and Hacker News (using Algolia API).
 
-## MVP Features
+### AI-Powered Insights
+-   Extracts `signal_type`, `summary`, `implication`, `tags`, and `is_material` using Gemini 2.0 Flash.
+-   Robust error handling for LLM calls.
 
-The Minimum Viable Product (MVP) focuses on:
+### Impact Scoring
+-   Rule-based scoring for `high`, `medium`, and `low` impact signals.
 
-*   **Competitor Monitoring:** Tracking 3-5 key competitors by scraping their public changelogs, press releases, and blog posts. LLMs summarize changes and identify potential implications.
-*   **Market Trend Analysis:** Monitoring industry news, relevant subreddits, and developer forums for discussions around pain points, emerging technologies, or shifts in sentiment. LLMs extract key themes and sentiment.
-*   **Alerting System:** Delivering daily or weekly digests of critical signals, categorized by impact, via a Telegram bot.
+### Alerting & Dashboard
+-   Daily digest delivered via Telegram.
+-   Public web dashboard displaying processed signals with filters and statistics.
 
-## Technical Stack
+## 🛠️ Tech Stack
 
-*   **Backend/Orchestration:** Python (Flask/FastAPI)
-*   **Data Scraping/Ingestion:** Apify, Playwright
-*   **NLP/LLM:** Google Gemini API
-*   **Data Storage:** PostgreSQL
-*   **Alerting:** Telegram Bot API
-*   **Deployment:** Azure (App Service, Functions, PostgreSQL)
+| Component | Technology |
+|-----------|-----------|
+| Backend API | FastAPI |
+| Database | Supabase (PostgreSQL) |
+| Database Client | `supabase-py` |
+| LLM | Google Gemini 2.0 Flash |
+| Scraping | `httpx`, `BeautifulSoup`, `PRAW` (for Reddit), `hn.algolia.com` API |
+| Frontend | React, Vite, Tailwind CSS |
+| Scheduler | GitHub Actions cron workflow |
+| Alerting | Telegram Bot API |
+| Deployment (Backend) | Render (free tier) |
+| Deployment (Frontend) | Vercel (free tier) |
 
-## Architecture Diagram
+## 📋 Prerequisites
 
-```mermaid
-graph TD
-    A[Public Web Sources] --> B(Scraping Engine: Apify/Playwright)
-    B --> C[Raw Data Storage: Azure Blob Storage]
-    C --> D(LLM Processing Engine: Python + Gemini API)
-    D --> E[Structured Insights Database: PostgreSQL]
-    E --> F(Backend API: Flask/FastAPI)
-    F --> G[Alerting System: Telegram Bot API]
-    F --> H[Frontend Dashboard (Optional MVP): React/Vite/Tailwind]
-    subgraph Azure Cloud
-        C
-        D
-        E
-        F
-        G
-        H
-    end
-```
+-   Python 3.11+
+-   Node.js 18+
+-   Supabase project (PostgreSQL database)
+-   Google Gemini API key
+-   Telegram Bot token and Chat ID (optional, for alerts)
 
-## Setup and Deployment
+## 🚀 Quick Start (Local Development)
 
-(Detailed instructions will be provided here upon completion of the build.)
+1.  **Clone the Repository**
+    ```bash
+    git clone https://github.com/meenakshirnair/ai-gtm-signal-platform.git
+    cd ai-gtm-signal-platform
+    ```
 
-## Usage Guide
+2.  **Backend Setup**
+    ```bash
+    python -m venv venv
+    source venv/bin/activate
+    pip install -r requirements.txt
+    ```
 
-(Detailed usage instructions will be provided here upon completion of the build.)
+3.  **Configure Environment Variables**
+    Create a `.env` file in the root directory:
+    ```env
+    GEMINI_API_KEY=your_gemini_api_key
+    SUPABASE_URL=your_supabase_project_url
+    SUPABASE_KEY=your_supabase_anon_key
+    TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+    TELEGRAM_CHAT_ID=your_telegram_chat_id
+    ```
 
-## Future Enhancements
+4.  **Run the Pipeline (Manual)**
+    ```bash
+    python pipeline/runner.py
+    ```
 
-*   Integration with more data sources (e.g., social media, review sites, financial news).
-*   Advanced sentiment analysis and predictive analytics.
-*   Customizable dashboards and reporting.
-*   User authentication and multi-tenancy for multiple startup clients.
-*   Integration with CRM systems for enriched insights.
+5.  **Run FastAPI Backend**
+    ```bash
+    uvicorn api.main:app --host 0.0.0.0 --port 8000
+    ```
 
-## Contributing
+6.  **Frontend Setup**
+    ```bash
+    cd dashboard
+    npm install
+    npm run dev
+    ```
 
-(Details on how to contribute will be added later.)
+## 📊 Supabase Schema
 
-## License
+### `raw_signals` table
+-   `id` (uuid, primary key, default `gen_random_uuid()`)
+-   `competitor` (text)
+-   `source` (text) — e.g., `reddit`, `changelog`, `hackernews`
+-   `url` (text, unique) — used for deduplication
+-   `title` (text)
+-   `content` (text)
+-   `scraped_at` (timestamptz, default `now()`)
+-   `processed` (boolean, default `false`)
 
-This project is licensed under the MIT License. See the `LICENSE` file for details.
+### `processed_signals` table
+-   `id` (uuid, primary key)
+-   `raw_signal_id` (uuid, foreign key → `raw_signals.id`)
+-   `competitor` (text)
+-   `signal_type` (text) — `feature_launch`, `pricing_change`, `partnership`, `community_sentiment`, `other`
+-   `summary` (text)
+-   `implication` (text)
+-   `impact` (text) — `high`, `medium`, `low`
+-   `tags` (text[])
+-   `created_at` (timestamptz, default `now()`)
+
+## ⚙️ Deployment
+
+-   **Backend (FastAPI)**: Deploy to [Render](https://render.com) (free tier)
+-   **Frontend (React)**: Deploy to [Vercel](https://vercel.com) (free tier)
+-   **Database**: [Supabase](https://supabase.com) (free tier)
+-   **Scheduler**: GitHub Actions cron workflow
+
+See [SETUP.md](SETUP.md) (coming soon) for detailed deployment instructions.
+
+## 🤝 Contributing
+
+Contributions are welcome! Please open an issue or submit a pull request.
+
+## 📄 License
+
+This project is licensed under the MIT License.
+
+## 🙏 Acknowledgments
+
+-   Google Gemini API
+-   Supabase
+-   Render
+-   Vercel
+-   Telegram Bot API
+-   PRAW
+-   Hacker News Algolia API
+
+---
+
+**Live Dashboard:** [Your Vercel URL]
+**Telegram Bot:** [Your Telegram Bot Link]
+
+**Built with ❤️ for GTM teams who want to stay ahead of the competition.**
