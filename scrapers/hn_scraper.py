@@ -12,7 +12,7 @@ def scrape_hn_algolia(competitor_name, query, limit=10):
             signals.append({
                 "competitor": competitor_name,
                 "source": "hackernews",
-                "url": hit.get("url") or f"https://news.ycombinator.com/item?id={hit.get("objectID")}",
+		"url": hit.get("url") or "https://news.ycombinator.com/item?id=" + str(hit.get("objectID", "")),
                 "title": hit.get("title"),
                 "content": hit.get("story_text") or hit.get("title")
             })
