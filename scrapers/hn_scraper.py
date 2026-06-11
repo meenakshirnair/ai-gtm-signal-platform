@@ -1,27 +1,34 @@
 import httpx
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
-def scrape_hn_algolia(competitor_name, query, limit=10):
+def scrape_hn_algolia(query, competitor, hits_per_page=5):
+    """Scrape HackerNews via Algolia API for a given query."""
     try:
-        hn_api_url = f"https://hn.algolia.com/api/v1/search?query={query}&tags=story"
-        response = httpx.get(hn_api_url)
-        response.raise_for_status()
-        data = response.json()
-
+        r = httpx.get(
+            "https://hn.algolia.com/api/v1/search",
+            params={"query": query, "tags": "story", "hitsPerPage": hits_per_page},
+            timeout=15
+        )
         signals = []
-        for hit in data.get("hits", [])[:limit]:
+        for hit in r.json().get("hits", []):
+            title = hit.get("title", "")
+            obj_id = hit.get("objectID", "")
+            url = hit.get("url") or ("https://news.ycombinator.com/item?id=" + str(obj_id))
+            if not title:
+                continue
             signals.append({
-                "competitor": competitor_name,
+                "competitor": competitor,
                 "source": "hackernews",
-		"url": hit.get("url") or "https://news.ycombinator.com/item?id=" + str(hit.get("objectID", "")),
-                "title": hit.get("title"),
-                "content": hit.get("story_text") or hit.get("title")
+                "url": url,
+                "title": title,
+                "content": title + ". Points: " + str(hit.get("points", 0)) + ". Comments: " + str(hit.get("num_comments", 0)) + "."
             })
         return signals
     except Exception as e:
-        print(f"Error scraping Hacker News for query {query}: {e}")
+        print(f"Error scraping HN for {competitor}: {e}")
         return []
 
-if __name__ == "__main__":
-    signals = scrape_hn_algolia("TestCompetitor", "AI", limit=5)
-    for signal in signals:
-        print(signal)
+def scrape_hn_algolia_copilot():
+    return scrape_hn_algolia("github copilot", "GitHub Copilot")
