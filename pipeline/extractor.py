@@ -62,6 +62,12 @@ def extract_insights(competitor, source, content, max_retries=2):
 
         try:
             insights = json.loads(raw_text)
+            # Handle case where Groq returns a list instead of a dict
+            if isinstance(insights, list):
+                insights = insights[0] if insights else None
+            if not isinstance(insights, dict):
+                logger.error(f"Unexpected response type for {competitor}/{source}")
+                return None
             return insights
         except json.JSONDecodeError as e:
             logger.error(f"JSON parse error for {competitor}/{source}: {e}")

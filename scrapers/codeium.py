@@ -1,80 +1,90 @@
 import httpx
 from bs4 import BeautifulSoup
-import praw
 import os
 from dotenv import load_dotenv
-import yaml
-
 load_dotenv()
 
-REDDIT_CLIENT_ID = os.getenv("REDDIT_CLIENT_ID")
+REDDIT_CLIENT_ID     = os.getenv("REDDIT_CLIENT_ID")
 REDDIT_CLIENT_SECRET = os.getenv("REDDIT_CLIENT_SECRET")
-REDDIT_USER_AGENT = os.getenv("REDDIT_USER_AGENT", "GTM-Signal-Platform/1.0")
+REDDIT_USER_AGENT    = os.getenv("REDDIT_USER_AGENT", "GTM-Signal-Platform/1.0")
 
-def get_reddit_instance():
-    return praw.Reddit(
-        client_id=REDDIT_CLIENT_ID,
-        client_secret=REDDIT_CLIENT_SECRET,
-        user_agent=REDDIT_USER_AGENT
-    )
-
-def scrape_codeium_changelog(url):
+def scrape_codeium_hn():
+    """Scrape HackerNews for Codeium mentions."""
     try:
-        response = httpx.get(url, follow_redirects=True)
-        response.raise_for_status()
-        soup = BeautifulSoup(response.text, 'html.parser')
-
+        r = httpx.get(
+            "https://hn.algolia.com/api/v1/search",
+            params={"query": "Codeium code editor", "tags": "story", "hitsPerPage": 5},
+            timeout=15
+        )
         signals = []
-        # Example: Adjust selectors based on actual changelog structure
-        for item in soup.select('.changelog-entry'): # Placeholder selector
-            title = item.select_one('h2').get_text(strip=True) if item.select_one('h2') else 'No title'
-            content = item.select_one('.changelog-body').get_text(strip=True) if item.select_one('.changelog-body') else 'No content'
-            link = url # Codeium changelog entries might not have individual links
+        for hit in r.json().get("hits", []):
+            title = hit.get("title", "")
+            url   = hit.get("url") or f"https://news.ycombinator.com/item?id={hit.get('objectID')}"
+            if not title:
+                continue
             signals.append({
-                'competitor': 'Codeium',
-                'source': 'changelog',
-                'url': link,
-                'title': title,
-                'content': content
+                "competitor": "Codeium",
+                "source":     "hackernews",
+                "url":        url,
+                "title":      title,
+                "content":    f"{title}. Points: {hit.get('points',0)}. Comments: {hit.get('num_comments',0)}."
             })
         return signals
     except Exception as e:
-        print(f"Error scraping Codeium changelog {url}: {e}")
+        print(f"Error scraping Codeium HN: {e}")
         return []
 
-def scrape_codeium_reddit(subreddit_name):
+def scrape_codeium_changelog():
+    """Scrape Codeium changelog with broad text extraction."""
+    for url in ["https://codeium.com/changelog", "https://windsurf.com/changelog"]:
+        try:
+            r = httpx.get(url, follow_redirects=True, timeout=15)
+            if r.status_code != 200:
+                continue
+            soup = BeautifulSoup(r.text, "html.parser")
+            for tag in soup(["nav", "footer", "script", "style"]):
+                tag.decompose()
+            text = soup.get_text(separator=" ", strip=True)[:3000]
+            if len(text) < 100:
+                continue
+            return [{
+                "competitor": "Codeium",
+                "source":     "changelog",
+                "url":        r.url.__str__(),
+                "title":      "Codeium Changelog",
+                "content":    text
+            }]
+        except Exception as e:
+            print(f"Error scraping Codeium changelog {url}: {e}")
+    return []
+
+def scrape_codeium_reddit():
+    """Scrape Reddit r/Codeium via PRAW."""
+    if not REDDIT_CLIENT_ID:
+        print("Error scraping Codeium Reddit r/Codeium: Required configuration setting 'client_id' missing.")
+        return []
     try:
-        reddit = get_reddit_instance()
-        subreddit = reddit.subreddit(subreddit_name)
+        import praw
+        reddit  = praw.Reddit(client_id=REDDIT_CLIENT_ID, client_secret=REDDIT_CLIENT_SECRET, user_agent=REDDIT_USER_AGENT)
         signals = []
-        for submission in subreddit.new(limit=10): # Get 10 latest posts
+        for post in reddit.subreddit("Codeium").hot(limit=5):
+            if post.score < 5:
+                continue
             signals.append({
-                'competitor': 'Codeium',
-                'source': 'reddit',
-                'url': f"https://www.reddit.com{submission.permalink}",
-                'title': submission.title,
-                'content': submission.selftext or submission.url
+                "competitor": "Codeium",
+                "source":     "reddit",
+                "url":        f"https://reddit.com{post.permalink}",
+                "title":      post.title,
+                "content":    f"{post.title}. {post.selftext[:500] if post.selftext else ''} Upvotes: {post.score}."
             })
         return signals
     except Exception as e:
-        print(f"Error scraping Codeium Reddit {subreddit_name}: {e}")
+        print(f"Error scraping Codeium Reddit: {e}")
         return []
 
 def scrape_codeium_signals():
-    all_signals = []
-    with open('config/competitors.yaml', 'r') as f:
-        config = yaml.safe_load(f)
-
-    for competitor_config in config['competitors']:
-        if competitor_config['name'] == 'Codeium':
-            for source in competitor_config['sources']:
-                if source['type'] == 'changelog':
-                    all_signals.extend(scrape_codeium_changelog(source['url']))
-                elif source['type'] == 'reddit':
-                    all_signals.extend(scrape_codeium_reddit(source['subreddit']))
-    return all_signals
-
-if __name__ == '__main__':
-    signals = scrape_codeium_signals()
-    for signal in signals:
-        print(signal)
+    signals = []
+    signals.extend(scrape_codeium_changelog())
+    signals.extend(scrape_codeium_hn())
+    signals.extend(scrape_codeium_reddit())
+    return signals
