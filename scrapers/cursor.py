@@ -2,6 +2,8 @@ import httpx
 from bs4 import BeautifulSoup
 import os
 from dotenv import load_dotenv
+from datetime import datetime
+
 load_dotenv()
 
 REDDIT_CLIENT_ID     = os.getenv("REDDIT_CLIENT_ID")
@@ -48,7 +50,7 @@ def scrape_cursor_changelog():
         return [{
             "competitor": "Cursor",
             "source":     "changelog",
-            "url":        "https://cursor.com/changelog",
+            "url":        "https://cursor.com/changelog#" + datetime.now().strftime("%Y-%m-%d"),
             "title":      "Cursor Changelog",
             "content":    text
         }]

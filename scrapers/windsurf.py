@@ -19,7 +19,7 @@ def scrape_windsurf_hn():
         signals = []
         for hit in r.json().get("hits", []):
             title = hit.get("title", "")
-            url   = hit.get("url") or f"https://news.ycombinator.com/item?id={hit.get('objectID')}"
+            url   = hit.get("url") or "https://news.ycombinator.com/item?id=" + str(hit.get('objectID', ''))
             if not title:
                 continue
             signals.append({
@@ -50,7 +50,7 @@ def scrape_windsurf_blog():
             return [{
                 "competitor": "Windsurf",
                 "source":     "blog",
-                "url":        r.url.__str__(),
+                "url":        r.url.__str__() + "#" + __import__("datetime").datetime.now().strftime("%Y-%m-%d"),
                 "title":      "Windsurf Blog",
                 "content":    text
             }]
