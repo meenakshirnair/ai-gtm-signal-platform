@@ -1,4 +1,3 @@
-  setLoading(true);
 import { useState, useEffect } from "react";
 
 const IMPACT_CONFIG = {
@@ -194,13 +193,20 @@ export default function App() {
   		  try {
     		    const API = import.meta.env.VITE_API_URL || "https://meenakshirn-gtm-signal-api.hf.space";
     		    await fetch(`${API}/refresh`, { method: "POST" });
-    		    setTimeout(async () => {
-      		      const r = await fetch(`${API}/signals?limit=50`);
-      		      const d = await r.json();
-      		      setSignals(d.signals || []);
-      		      setLastUpdated(new Date());
-      		      setLoading(false);
-    		    }, 120000);
+		    let attempts = 0;
+    		    const poll = setInterval(async () => {
+      			attempts++;
+      			try {
+        		  const r = await fetch(`${API}/signals?limit=50`);
+        		  const d = await r.json();
+        		  setSignals(d.signals || []);
+        		  setLastUpdated(new Date());
+      			} catch(e) {}
+      			if (attempts >= 12) {
+        		  clearInterval(poll);
+        		  setLoading(false);
+      			}
+    		    }, 15000);
   		  } catch(e) {
     		    setLoading(false);
   		  }
