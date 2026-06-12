@@ -5,6 +5,8 @@ import os
 from dotenv import load_dotenv
 from datetime import datetime, timedelta
 import logging
+import httpx as _httpx
+import os as _os
 
 load_dotenv()
 
@@ -149,3 +151,25 @@ async def get_latest_digest():
 if __name__ == "__main__":
     import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)
+
+@app.post("/refresh")
+async def trigger_pipeline():
+    token = _os.getenv("GH_DISPATCH_TOKEN")
+    if not token:
+        return {"error": "dispatch token not configured"}
+    try:
+        r = _httpx.post(
+            "https://api.github.com/repos/meenakshirnair/ai-gtm-signal-platform/actions/workflows/daily_pipeline.yml/dispatches",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Accept": "application/vnd.github+json"
+            },
+            json={"ref": "main"},
+            timeout=10
+        )
+        if r.status_code == 204:
+            return {"status": "pipeline triggered", "message": "Fresh signals in ~2 minutes"}
+        else:
+            return {"status": "error", "code": r.status_code}
+    except Exception as e:
+        return {"status": "error", "message": str(e)}

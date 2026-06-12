@@ -1,3 +1,4 @@
+  setLoading(true);
 import { useState, useEffect } from "react";
 
 const IMPACT_CONFIG = {
@@ -179,16 +180,36 @@ export default function App() {
               </p>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: 8, paddingTop: 4 }}>
-              <span style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: "#334155" }}>
-                {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
-              </span>
-              <button
-                onClick={() => { setLoading(true); setTimeout(() => { setLoading(false); setLastUpdated(new Date()); }, 800); }}
-                style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", padding: "7px 14px", background: "transparent", border: "1px solid #1E2D40", borderRadius: 6, color: "#475569", cursor: "pointer", transition: "all 0.15s" }}
+              <div style={{ textAlign: "right" }}>
+                <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: "#334155" }}>
+                  screen loaded {lastUpdated.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                </div>
+                <div style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, color: "#1E4A3A", marginTop: 3 }}>
+                  pipeline runs daily 08:00 UTC
+                </div>
+              </div>
+	      <button
+                onClick={async () => {
+  		  setLoading(true);
+  		  try {
+    		    const API = import.meta.env.VITE_API_URL || "https://meenakshirn-gtm-signal-api.hf.space";
+    		    await fetch(`${API}/refresh`, { method: "POST" });
+    		    setTimeout(async () => {
+      		      const r = await fetch(`${API}/signals?limit=50`);
+      		      const d = await r.json();
+      		      setSignals(d.signals || []);
+      		      setLastUpdated(new Date());
+      		      setLoading(false);
+    		    }, 120000);
+  		  } catch(e) {
+    		    setLoading(false);
+  		  }
+		}}
+		style={{ fontFamily: "'JetBrains Mono'", fontSize: 10, letterSpacing: "0.1em", textTransform: "uppercase", padding: "7px 14px", background: "transparent", border: "1px solid #1E2D40", borderRadius: 6, color: "#475569", cursor: "pointer", transition: "all 0.15s" }}
                 onMouseEnter={e => { e.target.style.borderColor = "#00D9FF60"; e.target.style.color = "#94A3B8"; }}
                 onMouseLeave={e => { e.target.style.borderColor = "#1E2D40"; e.target.style.color = "#475569"; }}
               >
-                {loading ? "···" : "↻ Refresh"}
+		{loading ? "⏳ ~2 min" : "↻ Refresh Now"}
               </button>
             </div>
           </div>
