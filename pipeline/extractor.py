@@ -16,19 +16,26 @@ if not GROQ_API_KEY:
 client = Groq(api_key=GROQ_API_KEY)
 
 EXTRACTION_PROMPT = """
-You are a GTM intelligence analyst. Extract structured data from this content.
+You are a GTM intelligence analyst. Classify and extract data from this content.
 
 Competitor: {competitor}
 Source: {source}
 Content: {content}
 
-Return ONLY valid JSON with no markdown, no explanation, no code fences:
+CLASSIFICATION RULES — pick the BEST fit, never default to 'other':
+- feature_launch: any new feature, update, release, version, capability, improvement
+- pricing_change: any mention of price, plan, tier, cost, free, paid, subscription change
+- partnership: integration, collaboration, deal, enterprise agreement, acquisition
+- community_sentiment: user opinions, complaints, praise, comparisons, Reddit/HN discussions
+- other: ONLY use if truly none of the above apply
+
+Return ONLY valid JSON, no markdown, no explanation:
 {{
   "signal_type": "feature_launch|pricing_change|partnership|community_sentiment|other",
   "summary": "1-2 sentence factual summary of what happened",
-  "implication": "1 sentence on what this means for GTM teams",
+  "implication": "1 sentence on what this means for GTM teams competing with {competitor}",
   "tags": ["tag1", "tag2"],
-  "is_material": true
+  "is_material": true or false
 }}
 """
 
